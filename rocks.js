@@ -1,16 +1,15 @@
-/* * oda.js v1.0
- * (c) 2019-2021 Roman Perepelkin, Vadim Biryuk
- * Under the MIT License.
+/*   rocks.js v1.0
+ *   (c) 2019-2021 Roman Perepelkin, Vadim Biryuk
+ *   Under the MIT License.
  *
- *   rocks.js
+ *   ROCKS
  *
  *   Reactive
  *   Optimizing
  *   Constructing
  *   Kernel with
  *   Smart cache
-
-*/
+ */
 
 if (!globalThis.KERNEL) {
     const regExpCheck = /^__.*__$/g;
