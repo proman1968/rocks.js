@@ -1,15 +1,16 @@
-/*   rocks.js v1.0
- *   (c) 2019-2021 Roman Perepelkin, Vadim Biryuk
- *   Under the MIT License.
+/* * oda.js v1.0
+ * (c) 2019-2021 Roman Perepelkin, Vadim Biryuk
+ * Under the MIT License.
  *
- *   ROCKS
+ *   rocks.js
  *
  *   Reactive
  *   Optimizing
  *   Constructing
  *   Kernel with
  *   Smart cache
- */
+
+*/
 
 if (!globalThis.KERNEL) {
     const regExpCheck = /^__.*__$/g;
@@ -40,7 +41,7 @@ if (!globalThis.KERNEL) {
             get: (target, key, resolver) => {
                 if (!key) return;
                 let val = options.target[key];
-                if (val){
+                if (val !== undefined){
                     if (options === val || options.target === val || typeof key === 'symbol' || regExpCheck.test(key))
                         return val;
                     if (typeof val === 'function')
@@ -86,7 +87,7 @@ if (!globalThis.KERNEL) {
                 return val;
             },
             set: (target, key, value) => {
-                const old = (Array.isArray(options.target) && key === 'length')?undefined:options.target[key];
+                const old = Array.isArray(options.target) && key === 'length'?undefined:options.target[key];
                 if (Object.equal(old, value)) return true;
                 const block = getBlock.call(this, options, key);
                 getProxyValue.call(this, block, value, old, true);
@@ -173,8 +174,10 @@ if (!globalThis.KERNEL) {
         model.observers = model.observers || [];
 
         const name = model?.is || '$' + this?.name;
-        if (globalThis[name])
-            throw new Error(`class named "${name}" already exist!!!`)
+        if (globalThis[name]) {
+            console.error(new Error(`class named "${name}" already exist!!!`));
+            return globalThis[name];
+        }
 
         const cls = class extends (this || Object) {
             constructor() {
@@ -491,6 +494,7 @@ if (!globalThis.KERNEL) {
         }
         return fn;
     }
+    globalThis.CLASS = KERNEL;
     KERNEL.makeReactive = makeReactive;
     const targetStack = [];
     // KERNEL.targets = [];
@@ -571,6 +575,36 @@ if (!globalThis.KERNEL) {
                     return idx;
                 }
             });
+            const push = Array.prototype.push;
+            Object.defineProperty(Array.prototype, 'push', {enumerable: false, configurable: true,
+                value: function (...args) {
+                    const res = push.call(this, ...args);
+                    if (this.__op__)
+                        this.__op__.proxy.length = this.length;
+                    return res;
+                }
+            });
+
+            const splice = Array.prototype.splice;
+            Object.defineProperty(Array.prototype, 'splice', {enumerable: false, configurable: true,
+                value: function (...args) {
+                    const res = splice.call(this, ...args);
+                    if (this.__op__)
+                        this.__op__.proxy.length = this.length;
+                    return res;
+                }
+            });
+
+            const slice = Array.prototype.slice;
+            Object.defineProperty(Array.prototype, 'slice', {enumerable: false, configurable: true,
+                value: function (...args) {
+                    const res = slice.call(this, ...args);
+                    if (this.__op__)
+                        this.__op__.proxy.length = this.length;
+                    return res;
+                }
+            });
+
             Object.defineProperty(Array.prototype, 'has', {
                 enumerable: false, configurable: true, value: Array.prototype.includes
             });
@@ -591,8 +625,6 @@ if (!globalThis.KERNEL) {
                         index = this.indexOf(i);
                         if (index>-1) continue;
                         index = this.push(i);
-                        if (this.__op__)
-                            this.__op__.proxy['length'] = index;
                         index--;
                     }
                     return index;
